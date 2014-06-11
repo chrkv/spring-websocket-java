@@ -33,8 +33,8 @@
                 console.log('Connected: ' + frame);
                 stompClient.subscribe('/topic/greetings', showGreetingCallback);
                 stompClient.subscribe('/serwize/stamp/topic/greetings', showGreetingCallback);
-                stompClient.subscribe('user/topic/subscribe-reply', showGreetingCallback);
-                stompClient.subscribe('user/topic/greetings', showGreetingCallback);
+                stompClient.subscribe('/user/topic/subscribe-reply', showGreetingCallback);
+                stompClient.subscribe('/user/topic/greetings', showGreetingCallback);
             });
         }
 
@@ -46,7 +46,7 @@
 
         function sendName() {
             var name = document.getElementById('name').value;
-            stompClient.send("/app/hello" + name.split("").reverse().join(""), {}, JSON.stringify({ 'name': name }));
+            stompClient.send("/app/stamp/hello" + name.split("").reverse().join(""), {}, JSON.stringify({ 'name': name }));
             stompClient.send("/app/stamp/goodbye/", {}, JSON.stringify({ 'name': "world is not enough" }));
             stompClient.send("/app/stamp/goodbye/petr", {}, JSON.stringify({ 'name': "world is not enough" }));
             stompClient.send("/app/stamp/goodbye/ivan", {}, JSON.stringify({ 'name': "world is not enough" }));
