@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Hello WebSocket</title>
+    <script src="sockjs-0.3.4.js"></script>
+    <script src="stomp.js"></script>
+    <script type="text/javascript">
+        var stompClient = null;
+        var simpleSocket = null;
+
+        function setConnected(connected) {
+            document.getElementById('connect').disabled = connected;
+            document.getElementById('disconnect').disabled = !connected;
+            document.getElementById('conversationDiv').style.visibility = connected ? 'visible' : 'hidden';
+            document.getElementById('response').innerHTML = '';
+        }
+
+        function connect() {
+            simpleSocket = new WebSocket('ws://localhost:8025/websockets/game');
+            simpleSocket.onopen = function () {
+                console.log("simpleSocket has been opened!");
+            };
+            simpleSocket.onclose = function () {
+                console.log("simpleSocket has been closed!");
+            };
+            simpleSocket.onmessage = function (msg) {
+                showGreeting(msg.data, 'game');
+            };
+            var socket = new WebSocket('ws://localhost:8092/socket');
+            stompClient = Stomp.over(socket);
+            stompClient.connect({}, function (frame) {
+                setConnected(true);
+                console.log('Connected: ' + frame);
+                stompClient.subscribe('/topic/greetings', showGreetingCallback);
+                stompClient.subscribe('/serwize/stamp/topic/greetings', showGreetingCallback);
+                stompClient.subscribe('user/topic/subscribe-reply', showGreetingCallback);
+                stompClient.subscribe('user/topic/greetings', showGreetingCallback);
+            });
+        }
+
+        function disconnect() {
+            stompClient.disconnect();
+            setConnected(false);
+            console.log("Disconnected");
+        }
+
+        function sendName() {
+            var name = document.getElementById('name').value;
+            stompClient.send("/app/hello" + name.split("").reverse().join(""), {}, JSON.stringify({ 'name': name }));
+            stompClient.send("/app/stamp/goodbye/", {}, JSON.stringify({ 'name': "world is not enough" }));
+            stompClient.send("/app/stamp/goodbye/petr", {}, JSON.stringify({ 'name': "world is not enough" }));
+            stompClient.send("/app/stamp/goodbye/ivan", {}, JSON.stringify({ 'name': "world is not enough" }));
+            simpleSocket.send(name);
+        }
+
+        function showGreeting(message, element) {
+            var response = document.getElementById(element);
+            var p = document.createElement('p');
+            p.style.wordWrap = 'break-word';
+            p.appendChild(document.createTextNode(message));
+            response.appendChild(p);
+        }
+
+        function showGreetingCallback(greeting) {
+            showGreeting(JSON.parse(greeting.body).message, 'response');
+        }
+    </script>
+</head>
+<body>
+<noscript><h2 style="color: #ff0000">Seems your browser doesn't support Javascript! Websocket relies on Javascript being
+    enabled. Please enable
+    Javascript and reload this page!</h2></noscript>
+<div>
+    <div>
+        <button id="connect" onclick="connect();">Connect</button>
+        <button id="disconnect" disabled="disabled" onclick="disconnect();">Disconnect</button>
+        <a href="/greetings/anon">send message</a>
+    </div>
+    <div id="conversationDiv">
+        <label>What is your name?</label><input type="text" id="name"/>
+        <button id="sendName" onclick="sendName();">Send</button>
+        <p id="response"></p>
+        <p id="game"></p>
+    </div>
+</div>
+</body>
+</html>
