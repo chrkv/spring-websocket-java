@@ -2,6 +2,7 @@ package hello;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
+import org.springframework.messaging.handler.annotation.MessageExceptionHandler;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -18,7 +19,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Controller
-@MessageMapping("/stamp")
+@MessageMapping({"stamp/", "/print/double/"})
 public class GreetingController {
 
     Map<String, Long> lastAccess = new HashMap<String, Long>();
@@ -37,6 +38,9 @@ public class GreetingController {
                              Principal user)
             throws Exception {
         lastAccess.put(user.getName(), System.currentTimeMillis());
+        if ("error".equals(name)) {
+            throw new IllegalArgumentException("Name 'error' is not allowed!");
+        }
         return new Greeting("Hello, " + message.getName() + "! (channel: " + name + ")");
     }
 
@@ -47,21 +51,29 @@ public class GreetingController {
         return "";
     }
 
-    @MessageMapping({"/goodbye/{name}"})
+    @MessageMapping({"/goodbye/{name}/"})
     @SendTo("/topic/greetings")
     public Greeting greeting(HelloMessage message,
                              @DestinationVariable String name) {
         return new Greeting("Goodbye, " + message.getName() + "! (" + name + ")");
     }
 
-    @SubscribeMapping("/topic/greetings")
-    @SendToUser("/topic/subscribe-reply")
+    @MessageMapping({"ping:{port}/",""})
+    public Greeting ping(@DestinationVariable int port) {
+        return new Greeting(port % 2 == 0 ? "hit!" : "miss!");
+    }
+
+    @MessageMapping
+    public Greeting head() {
+        return new Greeting("Yes, sir!");
+    }
+
+    @SubscribeMapping("/t0pic/greetings")
     public Greeting reply() {
         return new Greeting("Please type your name");
     }
 
     @Scheduled(fixedDelay = 1000)
-    @SendToUser
     public void remind() {
         for (Map.Entry<String, Long> entry : lastAccess.entrySet()) {
             if (System.currentTimeMillis() - entry.getValue() > 10000) {
@@ -72,6 +84,16 @@ public class GreetingController {
                 lastAccess.remove(user);
             }
         }
-
     }
+
+    @Scheduled(fixedDelay = 5000)
+    public void ads() {
+        template.convertAndSend("/topic/greetings", new Greeting("Only today knife for 5.99$!"));
+    }
+
+    @MessageExceptionHandler
+   	@SendToUser("/topic/errors")
+   	public Greeting handleException(Throwable exception) {
+   		return new Greeting(exception.getMessage());
+   	}
 }

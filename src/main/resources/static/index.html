@@ -31,10 +31,14 @@
             stompClient.connect({}, function (frame) {
                 setConnected(true);
                 console.log('Connected: ' + frame);
-                stompClient.subscribe('/topic/greetings', showGreetingCallback);
-                stompClient.subscribe('/serwize/stamp/topic/greetings', showGreetingCallback);
-                stompClient.subscribe('/user/topic/subscribe-reply', showGreetingCallback);
+                stompClient.subscribe("/topic/greetings", showGreetingCallback);
+                stompClient.subscribe('arr/print/double/t0pic/greetings', showGreetingCallback);
+                stompClient.subscribe('arr/stamp/t0pic/greetings', showGreetingCallback);
+                stompClient.subscribe('/user/topic/errors', showGreetingCallback);
                 stompClient.subscribe('/user/topic/greetings', showGreetingCallback);
+                stompClient.subscribe('/topic/print/double/ping:*', showGreetingCallback);
+                stompClient.subscribe('/topic/stamp/', showGreetingCallback);
+                stompClient.subscribe('/topic/print/double/', showGreetingCallback);
             });
         }
 
@@ -46,10 +50,16 @@
 
         function sendName() {
             var name = document.getElementById('name').value;
-            stompClient.send("/app/stamp/hello" + name.split("").reverse().join(""), {}, JSON.stringify({ 'name': name }));
-            stompClient.send("/app/stamp/goodbye/", {}, JSON.stringify({ 'name': "world is not enough" }));
-            stompClient.send("/app/stamp/goodbye/petr", {}, JSON.stringify({ 'name': "world is not enough" }));
-            stompClient.send("/app/stamp/goodbye/ivan", {}, JSON.stringify({ 'name': "world is not enough" }));
+            stompClient.send("arr/stamp/hello" + name.split("").reverse().join(""), {}, JSON.stringify({ 'name': name }));
+            stompClient.send("arr/stamp/goodbye/", {}, JSON.stringify({ 'name': "world is not enough" }));
+            stompClient.send('arr/stamp/goodbye/petr/', {}, JSON.stringify({ 'name': "world is not enough" }));
+            stompClient.send("arr/print/double/goodbye/ivan/", {}, JSON.stringify({ 'name': "world is not enough" }));
+            if (name == 'ping') {
+                stompClient.send("arr/print/double/ping:"+Math.floor((Math.random() * 10) + 1), {}, {});
+                stompClient.send("arr/print/double/", {}, {});
+                stompClient.send("arr/stamp/", {}, {});
+                stompClient.send("arr/print/double/", {}, {});
+            }
             simpleSocket.send(name);
         }
 

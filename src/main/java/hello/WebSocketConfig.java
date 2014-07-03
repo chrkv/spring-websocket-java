@@ -26,8 +26,8 @@ public class WebSocketConfig extends AbstractWebSocketMessageBrokerConfigurer im
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
         config.enableSimpleBroker("/topic");
-        config.setApplicationDestinationPrefixes("/app", "/serwize");
-//        config.setUserDestinationPrefix("/user");  https://jira.spring.io/browse/SPR-11868
+        config.setApplicationDestinationPrefixes("arr");
+        config.setUserDestinationPrefix("/user/");
     }
 
     @Override
